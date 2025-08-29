@@ -3,8 +3,11 @@
     public enum AppMessageType
     {
         BranchChange,
-        QuitRequested,   // user clicked Quit
-        Quit,            // confirmed quit
-        ToastDismiss     // dismiss an open toast
+        BackRequested,
+        QuitRequested,
+        Quit,
+        ToastDismiss,
+        GoToState,
+        AdoEnvChange
     }
 }

@@ -61,6 +61,16 @@ namespace WPADevTools.Controller
                 screen.Children.Add(Root);
         }
 
+        public void Shutdown()
+        {
+            if (Host != null)
+            {
+                Host.FrameUpdate -= OnHostUpdate;
+                Host = null;
+            }
+            EventHub.Message -= OnAppMessage;
+        }
+
         private void OnAppMessage(AppMessage msg)
         {
             switch (msg.Type)
@@ -73,9 +83,25 @@ namespace WPADevTools.Controller
                     if (msg.TryGetPayload<Branch>(out var branch))
                         Branch = branch;
                     break;
+
+                case AppMessageType.GoToState:
+                    if (msg.TryGetPayload<Type>(out var stateType))
+                        _ = GoToTypeAsync(stateType);
+                    break;
             }
         }
 
+        private Task GoToTypeAsync(Type stateType, CancellationToken ct = default)
+        {
+            IAppState target;
+            lock (_sync)
+            {
+                if (!_states.TryGetValue(stateType, out var state))
+                    throw new KeyNotFoundException($"State not registered: {stateType.Name}");
+                target = state;
+            }
+            return TransitionAsync(target, replaceStack: true, ct);
+        }
 
         public Controller Register<TState>(TState state) where TState : class, IAppState
         {

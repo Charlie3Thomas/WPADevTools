@@ -20,7 +20,8 @@ namespace WPADevTools.SadExtensions.UI.Buttons
             _gapY = gapY;
         }
 
-        public T Add<T>(T button) where T : Button
+        public T Add<T>(T button)
+            where T : Button
         {
             var y = _startY + _count * _gapY;
             button.Position = new Point(_x, y);

@@ -1,6 +1,7 @@
 ﻿using SadConsole;
 using SadConsole.Configuration;
 using WPADevTools.Controller.State.Implementations.MainMenu;
+using WPADevTools.Controller.State.Implementations.Azure;
 
 namespace WPADevTools
 {
@@ -18,6 +19,9 @@ namespace WPADevTools
                 .OnStart((sender, host) =>
                 {
                     Controller.Controller.Instance.RegisterFactory(() => new MainMenuState());
+                    Controller.Controller.Instance.RegisterFactory(() => new AzureDevOpsToolsState());
+                    Controller.Controller.Instance.RegisterFactory(() => new AzurePostDeployState());
+
                     _ = Controller.Controller.Instance.GoToAsync<MainMenuState>();
                 }).ConfigureFonts(true);
 
