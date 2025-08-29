@@ -2,7 +2,9 @@
 {
     public enum AppMessageType
     {
-        Quit,
-        BranchChange
+        BranchChange,
+        QuitRequested,   // user clicked Quit
+        Quit,            // confirmed quit
+        ToastDismiss     // dismiss an open toast
     }
 }

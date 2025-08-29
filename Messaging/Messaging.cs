@@ -11,8 +11,10 @@
             Payload = payload;
         }
 
-        public static AppMessage Quit() => new(AppMessageType.Quit, null);
         public static AppMessage BranchChange(object branch) => new(AppMessageType.BranchChange, branch);
+        public static AppMessage QuitRequested() => new(AppMessageType.QuitRequested, null);
+        public static AppMessage Quit() => new(AppMessageType.Quit, null);
+        public static AppMessage ToastDismiss() => new(AppMessageType.ToastDismiss, null);
 
         public bool TryGetPayload<T>(out T value)
         {

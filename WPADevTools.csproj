@@ -13,8 +13,4 @@
     <PackageReference Include="SadConsole.Host.MonoGame" Version="10.6.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controller\State\MainMenu\Components\" />
-  </ItemGroup>
-
 </Project>

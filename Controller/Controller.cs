@@ -82,7 +82,7 @@ namespace WPADevTools.Controller
             switch (msg.Type)
             {
                 case AppMessageType.Quit:
-                    Game.Instance?.MonoGameInstance.Exit();
+                    SadConsole.Game.Instance?.MonoGameInstance.Exit();
                     break;
 
                 case AppMessageType.BranchChange:
@@ -91,6 +91,7 @@ namespace WPADevTools.Controller
                     break;
             }
         }
+
 
         /// <summary>
         /// Register a state instance for later activation.

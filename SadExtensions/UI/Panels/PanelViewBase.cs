@@ -1,6 +1,7 @@
 ﻿using System;
 using SadConsole;
 using SadRogue.Primitives;
+using WPADevTools.SadExtensions.UI.Layout;
 
 namespace WPADevTools.SadExtensions.UI.Panels
 {
@@ -16,6 +17,9 @@ namespace WPADevTools.SadExtensions.UI.Panels
         {
             Surface = new ScreenSurface(width, height) { Position = position };
         }
+
+        public void CenterTo(ScreenSurface parent, int offsetX = 0, int offsetY = 0)
+            => Surface.Position = Anchors.Center(parent, Surface.Width, Surface.Height, offsetX, offsetY);
 
         public void AttachTo(ScreenObject parent)
         {

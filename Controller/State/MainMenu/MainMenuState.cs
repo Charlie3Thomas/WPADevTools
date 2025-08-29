@@ -1,4 +1,8 @@
-﻿using SadConsole.UI.Controls;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using SadConsole;
+using SadConsole.UI.Controls;
 using SadRogue.Primitives;
 using WPADevTools.Messaging;
 using WPADevTools.Controller.State.MainMenu;
@@ -16,7 +20,8 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
         private readonly ChromeSurface _chrome;
         private readonly MainMenuConsole _menuUi;
 
-        private readonly PanelHost _panelHost;
+        private readonly PanelHost _panelHost;   // scene panels
+        private readonly PanelHost _toastHost;   // overlay toasts (multiple)
 
         private Button? _btnExample;
         private Button? _btnQuit;
@@ -24,8 +29,7 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
         private CancellationTokenSource? _taskCts;
         private ExamplePanel? _example;
 
-        public MainMenuState()
-            : base(Branch.Menu.ToString())
+        public MainMenuState() : base(Branch.Menu.ToString())
         {
             _chrome = new ChromeSurface(new Dimensions(90, 30));
             Root.Children.Add(_chrome);
@@ -35,6 +39,9 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
 
             _panelHost = new PanelHost(PanelHostMode.Single);
             _chrome.Children.Add(_panelHost);
+
+            _toastHost = new PanelHost(PanelHostMode.Multiple);
+            _chrome.Children.Add(_toastHost); // added last -> renders on top
 
             BuildMenu();
             new ChromeHeaderBox("Main Menu").Draw(_chrome);
@@ -48,29 +55,58 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
             _menuUi.IsFocused = true;
 
             controller.BranchChanged += OnBranchChanged;
-            OnBranchChanged(controller.Branch);
+            EventHub.Message += OnAppMessage;    // listen for QuitRequested/Quit/ToastDismiss
 
+            OnBranchChanged(controller.Branch);
             return Task.CompletedTask;
         }
 
         public override Task OnExitAsync(Controller controller, CancellationToken ct)
         {
             controller.BranchChanged -= OnBranchChanged;
+            EventHub.Message -= OnAppMessage;
+
+            // Clean up overlays on exit
+            _toastHost.Clear();
+            _panelHost.Clear();
+            DisposeExample();
             return Task.CompletedTask;
         }
 
         public override void Update(TimeSpan delta)
         {
-            var host = Controller.Instance.Host;
-            if (host != null &&
-                Controller.Instance.Branch != Branch.Menu &&
-                host.Keyboard.IsKeyReleased(SadConsole.Input.Keys.Escape))
-            {
-                EventHub.Publish(AppMessage.BranchChange(Branch.Menu));
-            }
+            // No keyboard enum usage here; toast has buttons
         }
 
         private void OnBranchChanged(Branch branch) => SwitchBranch(branch);
+
+        private void OnAppMessage(AppMessage msg)
+        {
+            switch (msg.Type)
+            {
+                case AppMessageType.QuitRequested:
+                    ShowQuitToast();
+                    break;
+
+                case AppMessageType.ToastDismiss:
+                    _toastHost.Clear();
+                    break;
+
+                case AppMessageType.Quit:
+                    // Controller will actually exit the app. We just clear UI overlays.
+                    _toastHost.Clear();
+                    break;
+            }
+        }
+
+        private void ShowQuitToast()
+        {
+            var toast = new ConfirmToast(new Point(0, 0), "Really quit?");
+            toast.CenterTo(_chrome);
+            _toastHost.Clear();
+            _toastHost.Add(toast);
+        }
+
 
         private void BuildMenu()
         {
@@ -86,10 +122,7 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
             _btnQuit = new QuitButton(stack);
 
             var hintY = stack.NextY + 1;
-            var hint = new HintLabel("Enter/Click to select • ESC: Back")
-            {
-                Position = new Point(0, hintY)
-            };
+            var hint = new HintLabel("Enter/Click to select • ESC: Back") { Position = new Point(0, hintY) };
             _menuUi.Controls.Add(hint);
 
             _menuUi.IsFocused = true;
@@ -139,11 +172,7 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
             _taskCts?.Cancel();
             _taskCts?.Dispose();
             _taskCts = null;
-
-            if (_example != null)
-            {
-                _example = null;
-            }
+            _example = null; // host clears the visuals
         }
     }
 }
