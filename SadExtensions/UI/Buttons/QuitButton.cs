@@ -1,0 +1,15 @@
+﻿using WPADevTools.Messaging;
+
+namespace WPADevTools.SadExtensions.UI.Buttons
+{
+    public sealed class QuitButton : StackButton
+    {
+        public QuitButton(ButtonStack stack) : base(stack, 38, "Quit")
+        {
+            Click += OnClick;
+        }
+
+        private void OnClick(object? s, EventArgs e)
+            => EventHub.Publish(AppMessage.Quit());
+    }
+}

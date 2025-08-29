@@ -1,5 +1,4 @@
-﻿using System;
-using SadConsole;
+﻿using SadConsole;
 using SadRogue.Primitives;
 
 namespace WPADevTools.SadExtensions.UI.Adornments

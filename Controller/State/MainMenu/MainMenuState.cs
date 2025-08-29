@@ -1,21 +1,22 @@
-﻿using SadConsole;
-using SadConsole.UI.Controls;
+﻿using SadConsole.UI.Controls;
 using SadRogue.Primitives;
 using WPADevTools.Messaging;
-using WPADevTools.SadExtensions.Common.Buttons;
 using WPADevTools.Controller.State.MainMenu;
-using WPADevTools.Controller.State.MainMenu.Components;
 using WPADevTools.SadExtensions.UI.Adornments;
 using WPADevTools.SadExtensions.Common.Components;
 using WPADevTools.SadExtensions.UI.Labels;
+using WPADevTools.SadExtensions.UI.Buttons;
+using WPADevTools.SadExtensions.UI.Panels;
+using WPADevTools.Controller.State.MainMenu.Components;
 
 namespace WPADevTools.Controller.State.Implementations.MainMenu
 {
-    public sealed class MainMenuState
-        : AppStateBase
+    public sealed class MainMenuState : AppStateBase
     {
         private readonly ChromeSurface _chrome;
         private readonly MainMenuConsole _menuUi;
+
+        private readonly PanelHost _panelHost;
 
         private Button? _btnExample;
         private Button? _btnQuit;
@@ -32,6 +33,9 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
             _menuUi = new MainMenuConsole();
             _chrome.Children.Add(_menuUi);
 
+            _panelHost = new PanelHost(PanelHostMode.Single);
+            _chrome.Children.Add(_panelHost);
+
             BuildMenu();
             new ChromeHeaderBox("Main Menu").Draw(_chrome);
             new ChromeFooterBox("ESC: Back • Mouse/Keys enabled").Draw(_chrome);
@@ -44,7 +48,6 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
             _menuUi.IsFocused = true;
 
             controller.BranchChanged += OnBranchChanged;
-
             OnBranchChanged(controller.Branch);
 
             return Task.CompletedTask;
@@ -75,26 +78,29 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
             _menuUi.FocusOnMouseClick = true;
 
             var title = new TitleLabel("WPA Dev Tools");
-
             _menuUi.Controls.Add(title);
 
-            _btnExample = new ExampleButton();
-            _menuUi.Controls.Add(_btnExample);
+            var stack = new ButtonStack(_menuUi, x: 1, startY: 3, gapY: 2);
 
-            _btnQuit = new QuitButton();
-            _menuUi.Controls.Add(_btnQuit);
+            _btnExample = new ExampleButton(stack);
+            _btnQuit = new QuitButton(stack);
 
-            var hint = new HintLabel("Enter/Click to select • ESC: Back");
-
+            var hintY = stack.NextY + 1;
+            var hint = new HintLabel("Enter/Click to select • ESC: Back")
+            {
+                Position = new Point(0, hintY)
+            };
             _menuUi.Controls.Add(hint);
 
             _menuUi.IsFocused = true;
             _btnExample.IsFocused = true;
+            _menuUi.Controls.FocusedControl = _btnExample;
         }
 
         private void SwitchBranch(Branch next)
         {
             DisposeExample();
+            _panelHost.Clear();
 
             switch (next)
             {
@@ -109,7 +115,7 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
                         _btnExample.IsFocused = true;
                     }
 
-                    _chrome.Surface.Print(2, 1, "Main Menu".PadRight(Math.Max(0, _chrome.Width - 4)), Color.Yellow);
+                    ChromeHeaderBox.WriteText(_chrome, "Main Menu");
                     break;
 
                 case Branch.ExampleTask:
@@ -118,8 +124,7 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
 
                     ChromeHeaderBox.WriteText(_chrome, "Example Task");
 
-                    _example = new ExamplePanel(84, 20, new Point(3, 4));
-                    _example.AttachTo(_chrome);
+                    _example = _panelHost.Add(new ExamplePanel(84, 20, new Point(3, 4)));
                     _example.ShowWorking();
 
                     _taskCts?.Cancel();
@@ -137,8 +142,6 @@ namespace WPADevTools.Controller.State.Implementations.MainMenu
 
             if (_example != null)
             {
-                _example.DetachFrom(_chrome);
-                _example.Dispose();
                 _example = null;
             }
         }
