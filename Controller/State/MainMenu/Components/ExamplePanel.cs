@@ -1,7 +1,7 @@
 ﻿using SadConsole;
 using SadRogue.Primitives;
 
-namespace WPADevTools.SadExtensions
+namespace WPADevTools.Controller.State.MainMenu.Components
 {
     internal sealed class ExamplePanel
         : IDisposable

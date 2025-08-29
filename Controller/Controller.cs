@@ -1,5 +1,7 @@
 ﻿using SadConsole;
 using WPADevTools.Controller.State;
+using WPADevTools.Controller.State.MainMenu;
+using WPADevTools.Messaging;
 
 namespace WPADevTools.Controller
 {
@@ -17,6 +19,22 @@ namespace WPADevTools.Controller
 
         private CancellationTokenSource? _transitionCts;
         private DateTime _lastUpdateTs;
+
+
+        private Branch _branch = Branch.Menu;
+
+        public event Action<Branch>? BranchChanged;
+
+        public Branch Branch
+        {
+            get => _branch;
+            set
+            {
+                if (_branch == value) return;
+                _branch = value;
+                BranchChanged?.Invoke(value);
+            }
+        }
 
         /// <summary>
         /// The SadConsole host (set during Initialize).
@@ -47,20 +65,30 @@ namespace WPADevTools.Controller
         /// </summary>
         public void Initialize(GameHost host)
         {
-            if (Host != null)
-                return; // Already initialized
+            if (Host != null) return;
 
             Host = host;
-
-            // Subscribe to frame updates
             host.FrameUpdate += OnHostUpdate;
 
-            // Only try to mount if a screen already exists (UseDefaultConsole path).
-            // When using SetStartingScreen(CreateRoot), host.Screen is null here;
-            // the builder will set the starting screen to the value returned by CreateRoot (your Root).
+            // Message bus wiring (Controller listens)
+            EventHub.Message += OnAppMessage;
+
             if (host.Screen is { } screen && !ReferenceEquals(screen, Root))
-            {
                 screen.Children.Add(Root);
+        }
+
+        private void OnAppMessage(AppMessage msg)
+        {
+            switch (msg.Type)
+            {
+                case AppMessageType.Quit:
+                    Game.Instance?.MonoGameInstance.Exit();
+                    break;
+
+                case AppMessageType.BranchChange:
+                    if (msg.TryGetPayload<Branch>(out var branch))
+                        Branch = branch;
+                    break;
             }
         }
 

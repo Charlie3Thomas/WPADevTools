@@ -2,7 +2,7 @@
 using SadRogue.Primitives;
 using WPADevTools.SadExtensions.Common.Components;
 
-namespace WPADevTools.SadExtensions.MainMenu
+namespace WPADevTools.Controller.State.MainMenu
 {
     public class MainMenuConsole
         : ControlsConsole
