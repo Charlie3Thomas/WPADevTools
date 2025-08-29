@@ -5,7 +5,8 @@ namespace WPADevTools.Controller.State
     /// <summary>
     /// A helpful base class you can inherit to get sensible defaults.
     /// </summary>
-    public abstract class AppStateBase : IAppState
+    public abstract class AppStateBase
+        : IAppState
     {
         public string Name { get; }
         public ScreenObject Root { get; }
