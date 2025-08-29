@@ -2,7 +2,6 @@
 
 namespace WPADevTools.SadExtensions.UI.Panels
 {
-    /// <summary>Simple vertical stack layout helper for panels.</summary>
     public sealed class PanelStack
     {
         private readonly PanelHost _host;
@@ -17,7 +16,8 @@ namespace WPADevTools.SadExtensions.UI.Panels
             _gapY = gapY;
         }
 
-        public T Add<T>(T panel, int? fixedHeight = null) where T : PanelViewBase
+        public T Add<T>(T panel, int? fixedHeight = null)
+            where T : PanelViewBase
         {
             var y = _origin.Y + _count;
             panel.Surface.Position = new Point(_origin.X, y);

@@ -3,7 +3,8 @@ using WPADevTools.SadExtensions.UI.Panels;
 
 namespace WPADevTools.Controller.State.MainMenu.Components
 {
-    internal sealed class ExamplePanel : FramedPanel
+    internal sealed class ExamplePanel
+        : FramedPanel
     {
         private const string WorkingMessage = "Working… (auto-finish in ~2s)";
         private const string StatusMessage = "Done! Press ESC to return.";

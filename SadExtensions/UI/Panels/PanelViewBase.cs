@@ -4,7 +4,8 @@ using WPADevTools.SadExtensions.UI.Layout;
 
 namespace WPADevTools.SadExtensions.UI.Panels
 {
-    public abstract class PanelViewBase : IDisposable
+    public abstract class PanelViewBase
+        : IDisposable
     {
         public ScreenSurface Surface { get; }
         public ScreenObject Root => Surface;

@@ -4,9 +4,6 @@ using SadRogue.Primitives;
 
 namespace WPADevTools.SadExtensions.UI.Buttons
 {
-    /// <summary>
-    /// Lays out buttons vertically inside a ControlsConsole.
-    /// </summary>
     public sealed class ButtonStack
     {
         private readonly ControlsConsole _console;
@@ -23,7 +20,6 @@ namespace WPADevTools.SadExtensions.UI.Buttons
             _gapY = gapY;
         }
 
-        /// <summary>Places the button at the next slot and adds to the console.</summary>
         public T Add<T>(T button) where T : Button
         {
             var y = _startY + _count * _gapY;
@@ -33,7 +29,6 @@ namespace WPADevTools.SadExtensions.UI.Buttons
             return button;
         }
 
-        /// <summary>The Y for the next item (useful for placing hints below buttons).</summary>
         public int NextY => _startY + _count * _gapY;
 
         public void Reset() => _count = 0;

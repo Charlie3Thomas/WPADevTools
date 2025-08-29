@@ -1,11 +1,10 @@
 ﻿// SadExtensions/UI/Panels/PanelHost.cs
-using System.Collections.Generic;
 using SadConsole;
 
 namespace WPADevTools.SadExtensions.UI.Panels
 {
-    /// <summary>Container that owns panels and their lifecycle.</summary>
-    public sealed class PanelHost : ScreenObject
+    public sealed class PanelHost
+        : ScreenObject
     {
         private readonly List<PanelViewBase> _panels = [];
         public PanelHostMode Mode { get; }
@@ -15,7 +14,8 @@ namespace WPADevTools.SadExtensions.UI.Panels
             Mode = mode;
         }
 
-        public T Add<T>(T panel) where T : PanelViewBase
+        public T Add<T>(T panel)
+            where T : PanelViewBase
         {
             if (Mode == PanelHostMode.Single)
                 Clear();

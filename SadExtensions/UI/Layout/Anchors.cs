@@ -5,7 +5,6 @@ namespace WPADevTools.SadExtensions.UI.Layout
 {
     public static class Anchors
     {
-        /// <summary>Center a child of given size within a parent ScreenSurface (cell space).</summary>
         public static Point Center(ScreenSurface parent, int childWidth, int childHeight, int offsetX = 0, int offsetY = 0)
         {
             var x = (parent.Width - childWidth) / 2 + offsetX;

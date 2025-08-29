@@ -6,9 +6,11 @@ namespace WPADevTools
 {
     internal class Program
     {
+        private const string Title = "WPA Dev Tools";
+
         static void Main()
         {
-            Settings.WindowTitle = "WPA Dev Tools";
+            Settings.WindowTitle = Title;
 
             var startup = new Builder()
                 .SetWindowSizeInCells(90, 30)
@@ -17,8 +19,7 @@ namespace WPADevTools
                 {
                     Controller.Controller.Instance.RegisterFactory(() => new MainMenuState());
                     _ = Controller.Controller.Instance.GoToAsync<MainMenuState>();
-                })
-                .ConfigureFonts(true);
+                }).ConfigureFonts(true);
 
             Game.Create(startup);
             Game.Instance.Run();

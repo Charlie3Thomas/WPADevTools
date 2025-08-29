@@ -1,5 +1,4 @@
-﻿using System;
-using WPADevTools.Messaging;
+﻿using WPADevTools.Messaging;
 
 namespace WPADevTools.SadExtensions.UI.Buttons
 {

@@ -1,10 +1,9 @@
-﻿using SadConsole.UI.Controls;
-using WPADevTools.Messaging;
+﻿using WPADevTools.Messaging;
 using WPADevTools.Controller.State.MainMenu;
 using WPADevTools.SadExtensions.UI.Buttons;
 using WPADevTools.SadExtensions.Common.Components;
 
-namespace WPADevTools.Controller.State.Configuration
+namespace WPADevTools.Controller.State.Config
 {
     public static class StateConfigs
     {
@@ -16,6 +15,19 @@ namespace WPADevTools.Controller.State.Configuration
                 Footer: "ESC: Back  •  Mouse/Keys enabled",
                 ButtonsFactory: stack =>
                 [
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
+                    new ExampleButton(stack),
                     new ExampleButton(stack),
                     new QuitButton(stack)
                 ],

@@ -5,9 +5,6 @@ using WPADevTools.Messaging;
 
 namespace WPADevTools.Controller
 {
-    /// <summary>
-    /// Singleton state machine that owns the SadConsole screen graph for your app.
-    /// </summary>
     public sealed class Controller
     {
         private static readonly Lazy<Controller> _lazy = new(() => new Controller());
@@ -36,19 +33,10 @@ namespace WPADevTools.Controller
             }
         }
 
-        /// <summary>
-        /// The SadConsole host (set during Initialize).
-        /// </summary>
         public GameHost? Host { get; private set; }
 
-        /// <summary>
-        /// A root container where the active state's <see cref="IAppState.Root"/> is mounted.
-        /// </summary>
         public ScreenObject Root { get; }
 
-        /// <summary>
-        /// The currently active state (top of the stack) or null if none.
-        /// </summary>
         public IAppState? Current => _stack.Count > 0 ? _stack.Peek() : null;
 
         private Controller()
@@ -60,9 +48,6 @@ namespace WPADevTools.Controller
             _lastUpdateTs = DateTime.UtcNow;
         }
 
-        /// <summary>
-        /// Initialize the controller with the SadConsole <see cref="GameHost"/>. Call this once at startup.
-        /// </summary>
         public void Initialize(GameHost host)
         {
             if (Host != null) return;
@@ -70,7 +55,6 @@ namespace WPADevTools.Controller
             Host = host;
             host.FrameUpdate += OnHostUpdate;
 
-            // Message bus wiring (Controller listens)
             EventHub.Message += OnAppMessage;
 
             if (host.Screen is { } screen && !ReferenceEquals(screen, Root))
@@ -93,9 +77,6 @@ namespace WPADevTools.Controller
         }
 
 
-        /// <summary>
-        /// Register a state instance for later activation.
-        /// </summary>
         public Controller Register<TState>(TState state) where TState : class, IAppState
         {
             lock (_sync)
@@ -106,9 +87,6 @@ namespace WPADevTools.Controller
             return this;
         }
 
-        /// <summary>
-        /// Returns a registered state instance or throws if missing.
-        /// </summary>
         public TState Get<TState>() where TState : class, IAppState
         {
             lock (_sync)
@@ -122,27 +100,18 @@ namespace WPADevTools.Controller
             throw new KeyNotFoundException($"State not registered: {typeof(TState).Name}");
         }
 
-        /// <summary>
-        /// Replace the current state with the specified one (clears the stack and enters the new state).
-        /// </summary>
         public Task GoToAsync<TState>(CancellationToken ct = default) where TState : class, IAppState
         {
             var target = Get<TState>();
             return TransitionAsync(target, replaceStack: true, ct);
         }
 
-        /// <summary>
-        /// Push a new state on top of the stack, keeping the previous one underneath.
-        /// </summary>
         public Task PushAsync<TState>(CancellationToken ct = default) where TState : class, IAppState
         {
             var target = Get<TState>();
             return TransitionAsync(target, replaceStack: false, ct);
         }
 
-        /// <summary>
-        /// Pop the current state, returning to the previous one.
-        /// </summary>
         public async Task PopAsync(CancellationToken ct = default)
         {
             IAppState? leaving;
@@ -200,13 +169,11 @@ namespace WPADevTools.Controller
 
             try
             {
-                // Exit previous if we are replacing it (GoTo) or overlaying (Push keeps previous active but hidden by default).
                 if (replaceStack && previous != null)
                 {
                     await ExitAsync(previous, localCt).ConfigureAwait(false);
                 }
 
-                // Mount the target visuals.
                 lock (_sync)
                 {
                     Root.Children.Clear();
@@ -217,7 +184,7 @@ namespace WPADevTools.Controller
             }
             catch (OperationCanceledException)
             {
-                // Swallow if cancelled due to a newer transition.
+                // Swallow
             }
         }
 
@@ -255,9 +222,6 @@ namespace WPADevTools.Controller
             current?.Update(delta);
         }
 
-        /// <summary>
-        /// Convenience: quickly create and register a state instance using a factory.
-        /// </summary>
         public TState RegisterFactory<TState>(Func<TState> factory)
             where TState : class, IAppState
         {

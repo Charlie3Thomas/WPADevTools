@@ -1,10 +1,10 @@
-﻿// SadExtensions/UI/Panels/FramedPanel.cs
-using SadConsole;
+﻿using SadConsole;
 using SadRogue.Primitives;
 
 namespace WPADevTools.SadExtensions.UI.Panels
 {
-    public class FramedPanel : PanelViewBase
+    public class FramedPanel
+        : PanelViewBase
     {
         public FramedPanel(int width, int height, Point position)
             : base(width, height, position)

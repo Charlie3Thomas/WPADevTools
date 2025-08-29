@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using SadConsole.UI.Controls;
+﻿using SadConsole.UI.Controls;
 using WPADevTools.SadExtensions.UI.Buttons;
 using WPADevTools.SadExtensions.UI.Panels;
 using WPADevTools.Messaging;
 
-namespace WPADevTools.Controller.State
+namespace WPADevTools.Controller.State.Config
 {
-    /// <summary>Declarative UI spec for a composed state.</summary>
     public readonly record struct ComposedStateSpec(
         string Title,
         string Footer,
