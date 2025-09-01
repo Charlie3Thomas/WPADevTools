@@ -3,6 +3,6 @@
     public enum Branch
     {
         Menu,
-        ExampleTask
+        ExampleTask,
     }
 }

@@ -1,0 +1,1948 @@
+// ===== File: OingoBoingoConsole\GameSettings.cs =====
+static class GameSettings
+{
+    public const int GAME_WIDTH = 180;
+    public const int GAME_HEIGHT = 60;    
+}
+
+
+// ===== File: OingoBoingoConsole\Program.cs =====
+using OingoBoingoConsole.ScreenExtensions;
+using OingoBoingoConsole.Scenes;
+using SadConsole;
+using SadConsole.Configuration;
+using SadConsole.UI.Controls;
+using SadRogue.Primitives;
+
+namespace OingoBoingoConsole
+{
+    internal class Program
+    {
+        private const string Title = "WPA Dev Tools";
+
+        static void Main()
+        {
+            Settings.WindowTitle = Title;
+
+            var defs = SceneDefs.Map(
+                new SceneDefinition(
+                    "demo-a", "Common Controls",
+                    () => new CustomScreenBuilder()
+                        .WithLayout(SplitLayout.Vertical)
+                        .WithSize(GameSettings.GAME_WIDTH, GameSettings.GAME_HEIGHT)
+                        .WithPanelColors(new Color(30, 70, 120), new Color(120, 40, 40))
+                        .WithBorders(true)
+                        .ToggleWithF6(true)
+                        // Panel A
+                        .AddLabel(PanelTarget.A, "Common Controls", Anchor.TopLeft, (1, 1))
+                        .AddTextBox(PanelTarget.A, 18, "Edit me", Anchor.TopMiddle, (0, 1))
+                        .AddComboBox(PanelTarget.A, 16, 20, 6, new[] { "Alpha", "Beta", "Gamma" }, 0, Anchor.TopRight, (-1, 1))
+                        .AddListBox(PanelTarget.A, 20, 7, new[] { "One", "Two", "Three" }, Anchor.MiddleLeft, (1, 0))
+                        .AddDrawingArea(PanelTarget.A, 20, 6, Anchor.MiddleRight, (-21, -3))
+                        .AddButton(PanelTarget.A, "OK", Anchor.BottomLeft, (-1, -1), 10)
+                        .AddCheckBox(PanelTarget.A, "Check me", true, Anchor.BottomLeft, (12, -1))
+                        .AddRadioButton(PanelTarget.A, "Pick me", true, Anchor.BottomLeft, (29, -1))
+                        .AddToggleSwitch(PanelTarget.A, "Toggle", false, Anchor.BottomLeft, (47, -1))
+                        .AddNumberBox(PanelTarget.A, 8, 42, 0, 100, false, true, Anchor.BottomMiddle, (-20, -1))
+                        .AddProgressBar(PanelTarget.A, 24, 0.35f, HorizontalAlignment.Left, Anchor.BottomMiddle, (6, -1))
+                        .AddSelectionButton(PanelTarget.A, "Select…", Anchor.BottomMiddle, (-7, -3))
+                        // Panel B
+                        .AddButton3d(PanelTarget.B, "3D Btn", 12, 3, Anchor.TopLeft, (1, 1))
+                        .AddButtonBox(PanelTarget.B, "Box Btn", 12, 3, Anchor.TopRight, (-13, 1))
+                        .AddPanel(PanelTarget.B, 26, 8, Anchor.MiddleLeft, (1, -4))
+                        .AddSurfaceViewer(PanelTarget.B, 24, 6, new CellSurface(24, 6), Anchor.MiddleRight, (-26, -3))
+                        .AddScrollBar(PanelTarget.B, Orientation.Vertical, 8, Anchor.MiddleRight, (-1, -4))
+                        .AddTabControl(PanelTarget.B, 20, 6,
+                            new[] { new TabItem("One", new Panel(18, 5)), new TabItem("Two", new Panel(18, 5)) },
+                            Anchor.BottomMiddle, (-10, -6))
+                        .Build()
+                ),
+
+                new SceneDefinition(
+                    "demo-b", "Second Scene (Horizontal)",
+                    () => new CustomScreenBuilder()
+                        .WithLayout(SplitLayout.Horizontal)
+                        .WithSize(GameSettings.GAME_WIDTH, GameSettings.GAME_HEIGHT)
+                        .WithPanelColors(new Color(15, 35, 65), new Color(65, 20, 20))
+                        .WithBorders(true)
+                        .ToggleWithF6(true)
+                        .AddLabel(PanelTarget.A, "Scene B — Top", Anchor.TopLeft, (1, 1))
+                        .AddLabel(PanelTarget.B, "Scene B — Bottom", Anchor.TopLeft, (1, 1))
+                        .AddButton(PanelTarget.B, "Go back?", Anchor.BottomRight, (-12, -2), 12)
+                        .Build()
+                )
+            );
+
+            var startup = new Builder()
+                .SetWindowSizeInCells(GameSettings.GAME_WIDTH, GameSettings.GAME_HEIGHT)
+                .SetStartingScreen(_ => new SceneHost(defs, initialKey: "demo-a"))
+                .IsStartingScreenFocused(true)
+                .ConfigureFonts(true);
+
+            Game.Create(startup);
+            Game.Instance.Run();
+            Game.Instance.Dispose();
+        }
+    }
+}
+
+
+// ===== File: OingoBoingoConsole\RootScreen.cs =====
+using SadConsole;
+using SadRogue.Primitives;
+
+namespace OingoBoingoConsole.Scenes
+{
+    class RootScreen : ScreenObject
+    {
+        private readonly ScreenSurface _mainSurface;
+
+        public RootScreen()
+        {
+            // Create a surface that's the same size as the screen.
+            _mainSurface = new ScreenSurface(GameSettings.GAME_WIDTH, GameSettings.GAME_HEIGHT);
+
+            // Fill the surface with random characters and colors
+            _mainSurface.FillWithRandomGarbage(_mainSurface.Font);
+
+            // Create a rectangle box that has a violet foreground and black background.
+            // Characters are reset to 0 and mirroring is set to none. FillWithRandomGarbage will
+            // select random characters and mirroring, so this resets it within the box.
+            _mainSurface.Fill(new Rectangle(3, 3, 23, 3), Color.Violet, Color.Black, 0, Mirror.None);
+
+            // Print some text at (4, 4) using the foreground and background already there (violet and black)
+            _mainSurface.Print(4, 4, "Hello from SadConsole");
+
+            // Add _mainSurface as a child object of this one. This object, RootScreen, is a simple object
+            // and doesn't display anything itself. Since _mainSurface is going to be a child of it, _mainSurface
+            // will be displayed.
+            Children.Add(_mainSurface);
+        }
+    }
+}
+
+
+// ===== File: Scenes\SceneDefinition.cs =====
+using OingoBoingoConsole.ScreenExtensions;
+
+namespace OingoBoingoConsole.Scenes
+{
+    public sealed record class SceneDefinition
+    {
+        public required SceneKey Key { get; init; }
+        public required string Title { get; init; }
+        public required Func<CustomScreenDefinition> Build { get; init; }
+
+        // relationships (optional)
+        public SceneKey? ParentKey { get; init; }
+        public SceneKey[]? ChildrenKeys { get; init; }
+    }
+
+    public static class SceneDefs
+    {
+        public static Dictionary<SceneKey, SceneDefinition> Map(params SceneDefinition[] defs)
+            => defs.ToDictionary(d => d.Key);
+    }
+}
+
+
+// ===== File: Scenes\SceneHost.cs =====
+using SadConsole;
+using SadConsole.Components;
+using SadConsole.UI;
+using SadConsole.UI.Controls;
+using SadRogue.Primitives;
+using Console = SadConsole.Console;
+
+namespace OingoBoingoConsole.Scenes
+{
+    public sealed class SceneHost : ScreenObject
+    {
+        private readonly Console _title;
+        private readonly ScreenObject _stage;
+
+        public SceneRouter Router { get; }
+        private readonly List<SceneDefinition> _defsInOrder;
+
+        // popup picker (F1)
+        private readonly ControlsConsole _picker;
+        private readonly ListBox _pickerList;
+
+        private string _currentKey = string.Empty;
+
+        public SceneHost(Dictionary<string, SceneDefinition> defs, string initialKey)
+        {
+            // Title bar
+            _title = new Console(GameSettings.GAME_WIDTH, 1) { Position = (0, 0) };
+            _title.Surface.DefaultBackground = Color.Black;
+            _title.Surface.DefaultForeground = Color.Yellow;
+            _title.Surface.Clear();
+            Children.Add(_title);
+
+            // Stage (scenes live here, starts at row 1)
+            _stage = new ScreenObject { Position = (0, 1) };
+            Children.Add(_stage);
+
+            Router = new SceneRouter(defs, _stage);
+            _defsInOrder = defs.Values.ToList();
+
+            Router.SceneChanged += (scene, def) =>
+            {
+                _currentKey = def.Key;  // track current key
+
+                _title.Surface.Clear();
+                _title.Surface.Print(1, 0,
+                    $"{def.Title}  [{def.Key}]  —  F1:Scenes • Alt←/→ Back/Forward • N/P Next/Prev • 1..9 Jump");
+                scene.Position = (0, 0);
+            };
+
+
+            // ---- Scene picker (hidden) ----
+            _picker = new ControlsConsole(28, Math.Max(10, GameSettings.GAME_HEIGHT - 2))
+            {
+                Position = (0, 1),
+                IsVisible = false,
+                IsEnabled = false
+            };
+            Border.CreateForSurface(_picker, "Scenes");
+
+            _pickerList = new ListBox(_picker.Width - 2, _picker.Height - 4) { Position = (1, 2) };
+            foreach (var d in _defsInOrder)
+                _pickerList.Items.Add((d.Key, d.Title));
+            _pickerList.SelectedItemExecuted += (_, e) =>
+            {
+                if (e.Item is ValueTuple<string, string> sel)
+                {
+                    HidePicker();
+                    Router.NavigateTo(sel.Item1, fade: true);
+                }
+            };
+            _picker.Controls.Add(_pickerList);
+
+            _picker.Print(1, 1, "Enter = open".CreateColored(Colors.CreateSadConsoleBlue().Title, null));
+            Children.Add(_picker);
+
+            Router.NavigateTo(initialKey, replace: false, fade: false);
+
+            SadComponents.Add(new HostHotkeys(this, Router, _defsInOrder));
+        }
+
+        private void TogglePicker()
+        {
+            if (_picker.IsVisible) HidePicker();
+            else ShowPicker();
+        }
+
+        private void ShowPicker()
+        {
+            _picker.IsVisible = true;
+            _picker.IsEnabled = true;
+            _picker.IsFocused = true;
+        }
+
+        private void HidePicker()
+        {
+            _picker.IsVisible = false;
+            _picker.IsEnabled = false;
+            // return focus to current scene if needed
+            if (Router.Current != null) Router.Current.IsFocused = true;
+        }
+
+        private sealed class HostHotkeys : UpdateComponent
+        {
+            private readonly SceneHost _host;
+            private readonly SceneRouter _router;
+            private readonly List<SceneDefinition> _defs;
+
+            public HostHotkeys(SceneHost host, SceneRouter router, List<SceneDefinition> defs)
+            {
+                _host = host;
+                _router = router;
+                _defs = defs;
+            }
+
+            public override void Update(IScreenObject _, TimeSpan __)
+            {
+                var k = GameHost.Instance.Keyboard;
+
+                // picker
+                if (k.IsKeyPressed(SadConsole.Input.Keys.F1))
+                    _host.TogglePicker();
+
+                // Back/Forward
+                if ((k.IsKeyDown(SadConsole.Input.Keys.LeftAlt) || k.IsKeyDown(SadConsole.Input.Keys.RightAlt)) &&
+                    k.IsKeyPressed(SadConsole.Input.Keys.Left))
+                    _router.Back();
+
+                if ((k.IsKeyDown(SadConsole.Input.Keys.LeftAlt) || k.IsKeyDown(SadConsole.Input.Keys.RightAlt)) &&
+                    k.IsKeyPressed(SadConsole.Input.Keys.Right))
+                    _router.Forward();
+
+                // Next/Prev (N/P)
+                if (k.IsKeyPressed(SadConsole.Input.Keys.N))
+                    JumpRelative(+1);
+                if (k.IsKeyPressed(SadConsole.Input.Keys.P))
+                    JumpRelative(-1);
+
+                // 1..9 direct jump
+                for (int i = 0; i < Math.Min(9, _defs.Count); i++)
+                {
+                    var key = (SadConsole.Input.Keys)((int)SadConsole.Input.Keys.D1 + i);
+                    if (k.IsKeyPressed(key))
+                    {
+                        _router.NavigateTo(_defs[i].Key, fade: true);
+                        break;
+                    }
+                }
+            }
+
+            private void JumpRelative(int delta)
+            {
+                if (_defs.Count == 0) return;
+
+                var curKey = _host._currentKey;
+                var idx = curKey != null
+                    ? _defs.FindIndex(d => d.Key.Equals(curKey, StringComparison.OrdinalIgnoreCase))
+                    : -1;
+
+                if (idx < 0) idx = 0; // fallback to first
+                idx = (idx + delta + _defs.Count) % _defs.Count;
+
+                _router.NavigateTo(_defs[idx].Key, fade: true);
+            }
+        }
+    }
+}
+
+
+// ===== File: Scenes\SceneKey.cs =====
+namespace OingoBoingoConsole.Scenes
+{
+    public enum SceneKey
+    {
+        Home,
+        Tools,
+        About,
+        // ...
+    }
+}
+
+
+// ===== File: Scenes\SceneRouter.cs =====
+using System;
+using System.Collections.Generic;
+using SadConsole;
+using SadConsole.Instructions;
+using SadConsole.Renderers;
+
+namespace OingoBoingoConsole.Scenes
+{
+    public sealed class SceneRouter
+    {
+        private readonly Dictionary<string, SceneDefinition> _defs;
+        private readonly ScreenObject _host;   // where scenes get attached
+
+        private readonly List<string> _history = new();
+        private int _index = -1;
+
+        public SceneRouter(Dictionary<string, SceneDefinition> defs, ScreenObject host)
+        {
+            _defs = defs;
+            _host = host;
+        }
+
+        public ScreenExtensions.CustomScreen? Current { get; private set; }
+
+        public bool CanBack => _index > 0;
+        public bool CanForward => _index >= 0 && _index + 1 < _history.Count;
+
+        public event Action<ScreenExtensions.CustomScreen, SceneDefinition>? SceneChanged;
+
+        public void NavigateTo(string key, bool replace = false, bool fade = true)
+        {
+            if (!_defs.TryGetValue(key, out var def)) return;
+
+            var next = def.Factory();
+
+            if (Current != null && fade)
+                CrossFade(Current, next);
+            else
+                ReplaceCurrent(next);
+
+            if (replace && _index >= 0) _history[_index] = key;
+            else
+            {
+                if (_index < _history.Count - 1)
+                    _history.RemoveRange(_index + 1, _history.Count - (_index + 1));
+                _history.Add(key);
+                _index = _history.Count - 1;
+            }
+
+            SceneChanged?.Invoke(next, def);
+        }
+
+        public void Back()
+        {
+            if (!CanBack) return;
+            _index--;
+            NavigateTo(_history[_index], replace: true, fade: true);
+        }
+
+        public void Forward()
+        {
+            if (!CanForward) return;
+            _index++;
+            NavigateTo(_history[_index], replace: true, fade: true);
+        }
+
+        private void ReplaceCurrent(ScreenExtensions.CustomScreen scene)
+        {
+            if (Current?.Parent != null) _host.Children.Remove(Current);
+            _host.Children.Add(scene);
+            Current = scene;
+        }
+
+        private static IScreenSurface? FindFirstSurface(IScreenObject node)
+        {
+            if (node is IScreenSurface s) return s;
+
+            foreach (var child in node.Children)
+            {
+                var found = FindFirstSurface(child);
+                if (found != null) return found;
+            }
+
+            return null;
+        }
+
+        private void CrossFade(ScreenExtensions.CustomScreen oldScene, ScreenExtensions.CustomScreen newScene)
+        {
+            _host.Children.Add(newScene);
+
+            var fromSurf = FindFirstSurface(oldScene);
+            var toSurf = FindFirstSurface(newScene);
+
+            var fromR = fromSurf?.Renderer as ScreenSurfaceRenderer;
+            var toR = toSurf?.Renderer as ScreenSurfaceRenderer;
+
+            if (fromR == null || toR == null)
+            {
+                // fallback: no renderer that supports opacity
+                _host.Children.Remove(oldScene);
+                Current = newScene;
+                return;
+            }
+
+            toR.Opacity = 0;
+
+            var step = new AnimatedValue(
+                TimeSpan.FromMilliseconds(350),
+                0, 255,
+                new SadConsole.EasingFunctions.Linear { Mode = SadConsole.EasingFunctions.EasingMode.InOut });
+
+            step.ValueChanged += (_, value) =>
+            {
+                byte b = (byte)value;
+                byte a = (byte)(255 - b);
+                fromR.Opacity = a;
+                toR.Opacity = b;
+            };
+
+            step.Finished += (_, __) =>
+            {
+                toR.Opacity = 255;
+                if (oldScene.Parent != null) _host.Children.Remove(oldScene);
+                Current = newScene;
+            };
+
+            step.RemoveOnFinished = true;
+            _host.SadComponents.Add(step);
+        }
+    }
+}
+
+
+// ===== File: ScreenExtensions\Anchors.cs =====
+// File: ScreenExtensions/Anchors.cs
+using System;
+using SadConsole;
+using SadRogue.Primitives;
+
+namespace OingoBoingoConsole.ScreenExtensions
+{
+    public enum Anchor
+    {
+        TopLeft,
+        TopRight,
+        MiddleLeft,
+        MiddleRight,
+        TopMiddle,
+        BottomMiddle,
+        BottomLeft,
+        BottomRight,
+        Middle
+    }
+
+    public static class AnchorLayout
+    {
+        /// <summary>
+        /// Calculates a position inside <paramref name="area"/> for a child of size <paramref name="size"/>
+        /// anchored to <paramref name="anchor"/>, with optional <paramref name="offset"/>.
+        /// </summary>
+        public static Point GetPosition(Rectangle area, Point size, Anchor anchor, Point? offset = null, bool clampInside = true)
+        {
+            int x, y;
+
+            switch (anchor)
+            {
+                case Anchor.TopLeft:
+                    x = area.X; y = area.Y; break;
+
+                case Anchor.TopRight:
+                    x = area.X + area.Width - size.X; y = area.Y; break;
+
+                case Anchor.BottomLeft:
+                    x = area.X; y = area.Y + area.Height - size.Y; break;
+
+                case Anchor.BottomRight:
+                    x = area.X + area.Width - size.X; y = area.Y + area.Height - size.Y; break;
+
+                case Anchor.TopMiddle:
+                    x = area.X + (area.Width - size.X) / 2; y = area.Y; break;
+
+                case Anchor.BottomMiddle:
+                    x = area.X + (area.Width - size.X) / 2; y = area.Y + area.Height - size.Y; break;
+
+                case Anchor.MiddleLeft:
+                    x = area.X; y = area.Y + (area.Height - size.Y) / 2; break;
+
+                case Anchor.MiddleRight:
+                    x = area.X + area.Width - size.X; y = area.Y + (area.Height - size.Y) / 2; break;
+
+                case Anchor.Middle:
+                default:
+                    x = area.X + (area.Width - size.X) / 2;
+                    y = area.Y + (area.Height - size.Y) / 2;
+                    break;
+            }
+
+            if (offset.HasValue)
+            {
+                x += offset.Value.X;
+                y += offset.Value.Y;
+            }
+
+            var pos = new Point(x, y);
+            return clampInside ? ClampInside(pos, size, area) : pos;
+        }
+
+        private static Point ClampInside(Point pos, Point size, Rectangle area)
+        {
+            int minX = area.X;
+            int minY = area.Y;
+            int maxX = area.X + Math.Max(0, area.Width - size.X);
+            int maxY = area.Y + Math.Max(0, area.Height - size.Y);
+
+            int cx = pos.X < minX ? minX : (pos.X > maxX ? maxX : pos.X);
+            int cy = pos.Y < minY ? minY : (pos.Y > maxY ? maxY : pos.Y);
+
+            return new Point(cx, cy);
+        }
+    }
+
+    public static class ScreenObjectAnchorExtensions
+    {
+        /// <summary>
+        /// Positions <paramref name="child"/> inside <paramref name="hostArea"/> using <paramref name="anchor"/>.
+        /// </summary>
+        public static void AttachToAnchor(this IScreenObject child, Rectangle hostArea, Anchor anchor, Point? offset = null, bool clampInside = true)
+        {
+            var size = GetChildSize(child);
+            child.Position = AnchorLayout.GetPosition(hostArea, size, anchor, offset, clampInside);
+        }
+
+        public static void AttachToAnchorWithPadding(
+                this IScreenObject obj,
+                Rectangle hostArea,
+                Anchor anchor,
+                (int x, int y)? offset = null,
+                (int left, int top, int right, int bottom)? pad = null)
+        {
+            var p = pad ?? (0, 0, 0, 0);
+            var padded = new Rectangle(
+                hostArea.X + p.left,
+                hostArea.Y + p.top,
+                Math.Max(0, hostArea.Width - p.left - p.right),
+                Math.Max(0, hostArea.Height - p.top - p.bottom));
+
+            obj.AttachToAnchor(padded, anchor, offset);
+        }
+
+        private static Point GetChildSize(IScreenObject child) =>
+            child switch
+            {
+                SadConsole.Console con => new Point(con.Width, con.Height),
+                IScreenSurface surf => new Point(surf.Surface.ViewWidth, surf.Surface.ViewHeight),
+                _ => new Point(1, 1)
+            };
+    }
+}
+
+
+// ===== File: ScreenExtensions\ControlAnchorExtensions.cs =====
+using System;
+using System.Collections.Generic;
+using SadConsole;
+using SadConsole.Components;
+using SadConsole.UI;
+using SadConsole.UI.Controls;
+using SadRogue.Primitives;
+
+namespace OingoBoingoConsole.ScreenExtensions
+{
+    /// <summary>
+    /// Extensions to position SadConsole UI controls using our Anchor helpers.
+    /// Works for any ControlBase (Button, Label, TextBox, etc).
+    /// </summary>
+    public static class ControlAnchorExtensions
+    {
+        /// <summary>
+        /// Anchor a control inside a host ControlsConsole. Optionally keep it anchored when the host resizes.
+        /// If the control isn't already in the host, it will be added.
+        /// </summary>
+        public static T AnchorTo<T>(
+            this T ctrl,
+            ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool keepAnchoredOnResize = true,
+            bool clampInside = true) where T : ControlBase
+        {
+            if (ctrl.Parent != host)
+                host.Controls.Add(ctrl);
+
+            // initial placement
+            Place(ctrl, host, anchor, offset ?? (0, 0), clampInside);
+
+            // bind to keep anchored
+            if (keepAnchoredOnResize)
+            {
+                var binder = host.GetSadComponent<AnchorBinder>();
+                if (binder is null)
+                {
+                    binder = new AnchorBinder(host);
+                    host.SadComponents.Add(binder);
+                }
+
+                binder.Set(ctrl, anchor, offset ?? (0, 0), clampInside);
+            }
+
+            return ctrl;
+        }
+
+        /// <summary>
+        /// Convenience overload that infers the host from ctrl.Parent (must already be added to a ControlsConsole).
+        /// </summary>
+        public static T AnchorTo<T>(
+            this T ctrl,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool keepAnchoredOnResize = true,
+            bool clampInside = true) where T : ControlBase
+        {
+            if (ctrl.Parent is not ControlsConsole host)
+                throw new InvalidOperationException("AnchorTo without host requires the control to already be added to a ControlsConsole.");
+
+            return AnchorTo(ctrl, host, anchor, offset, keepAnchoredOnResize, clampInside);
+        }
+
+        // Sugar for common anchors
+        public static T TopLeft<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.TopLeft, off, keep);
+
+        public static T TopRight<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.TopRight, off, keep);
+
+        public static T BottomLeft<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.BottomLeft, off, keep);
+
+        public static T BottomRight<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.BottomRight, off, keep);
+
+        public static T TopMiddle<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.TopMiddle, off, keep);
+
+        public static T BottomMiddle<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.BottomMiddle, off, keep);
+
+        public static T MiddleLeft<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.MiddleLeft, off, keep);
+
+        public static T MiddleRight<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.MiddleRight, off, keep);
+
+        public static T Middle<T>(this T c, ControlsConsole h, (int x, int y)? off = null, bool keep = true) where T : ControlBase
+            => c.AnchorTo(h, Anchor.Middle, off, keep);
+
+        // ---------- internals ----------
+
+        private static void Place(ControlBase ctrl, ControlsConsole host, Anchor anchor, (int x, int y) offset, bool clampInside)
+        {
+            var area = new Rectangle(0, 0, host.Width, host.Height);
+            var size = (ctrl.Width, ctrl.Height);
+
+            // Use your existing Anchor helper
+            Point pos = AnchorLayout.GetPosition(area, size, anchor, offset);
+
+            if (clampInside)
+            {
+                int maxX = Math.Max(0, area.Width - size.Item1);
+                int maxY = Math.Max(0, area.Height - size.Item2);
+                if (pos.X < area.X) pos = new Point(area.X, pos.Y);
+                if (pos.Y < area.Y) pos = new Point(pos.X, area.Y);
+                if (pos.X > maxX) pos = new Point(maxX, pos.Y);
+                if (pos.Y > maxY) pos = new Point(pos.X, maxY);
+            }
+
+            ctrl.Position = pos;
+        }
+
+        /// <summary>
+        /// Keeps a set of controls anchored to a ControlsConsole when it resizes.
+        /// </summary>
+        private sealed class AnchorBinder : UpdateComponent
+        {
+            private readonly ControlsConsole _host;
+            private readonly Dictionary<ControlBase, (Anchor anchor, (int x, int y) offset, bool clamp)> _map = new();
+            private (int w, int h) _lastSize;
+
+            public AnchorBinder(ControlsConsole host)
+            {
+                _host = host;
+                _lastSize = (host.Width, host.Height);
+            }
+
+            public void Set(ControlBase ctrl, Anchor anchor, (int x, int y) offset, bool clamp)
+                => _map[ctrl] = (anchor, offset, clamp);
+
+            public override void Update(IScreenObject host, TimeSpan delta)
+            {
+                // Host size changed?
+                if (_lastSize.w != _host.Width || _lastSize.h != _host.Height)
+                {
+                    _lastSize = (_host.Width, _host.Height);
+                    ReanchorAll();
+                }
+                else
+                {
+                    // If any anchored control changed size, honor that too.
+                    ReanchorAll(checkSizeOnly: true);
+                }
+            }
+
+            private readonly Dictionary<ControlBase, (int w, int h)> _sizesCache = new();
+
+            private void ReanchorAll(bool checkSizeOnly = false)
+            {
+                List<ControlBase> toRemove = null;
+
+                foreach (var kv in _map)
+                {
+                    var ctrl = kv.Key;
+                    if (ctrl.Parent != _host)
+                    {
+                        (toRemove ??= new()).Add(ctrl);
+                        continue;
+                    }
+
+                    var size = (ctrl.Width, ctrl.Height);
+                    if (checkSizeOnly)
+                    {
+                        if (!_sizesCache.TryGetValue(ctrl, out var prev) || prev.w != size.Item1 || prev.h != size.Item2)
+                            Place(ctrl, _host, kv.Value.anchor, kv.Value.offset, kv.Value.clamp);
+                    }
+                    else
+                    {
+                        Place(ctrl, _host, kv.Value.anchor, kv.Value.offset, kv.Value.clamp);
+                    }
+
+                    _sizesCache[ctrl] = size;
+                }
+
+                if (toRemove != null)
+                    foreach (var c in toRemove) _map.Remove(c);
+            }
+        }
+    }
+}
+
+
+// ===== File: ScreenExtensions\Controls\AnchoredControls.cs =====
+using SadConsole;
+using SadConsole.UI;
+using SadConsole.UI.Controls;
+
+namespace OingoBoingoConsole.ScreenExtensions
+{
+    /// <summary>
+    /// Anchor helpers for built-in SadConsole controls.
+    /// Requires your AnchorLayout + ControlAnchors (AnchorTo) extensions.
+    /// </summary>
+    public static class AnchoredControls
+    {
+        // -------- Common Controls --------
+
+        public static Button AddAnchoredButton(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = -1,
+            int height = 1,
+            bool clampInside = true)
+        {
+            var w = width <= 0 ? Math.Max(6, (text?.Length ?? 0) + 2) : width;
+            var ctrl = new Button(w, height) { Text = text ?? string.Empty };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static Button3d AddAnchoredButton3d(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 11,
+            int height = 3,
+            bool clampInside = true)
+        {
+            var ctrl = new Button3d(width, height) { Text = text ?? string.Empty };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static ButtonBox AddAnchoredButtonBox(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 12,
+            int height = 3,
+            bool clampInside = true)
+        {
+            var ctrl = new ButtonBox(width, height) { Text = text ?? string.Empty };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static CheckBox AddAnchoredCheckBox(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = -1,
+            int height = 1,
+            bool isChecked = false,
+            bool clampInside = true)
+        {
+            var w = width <= 0 ? Math.Max(8, (text?.Length ?? 0) + 4) : width;
+            var ctrl = new CheckBox(w, height) { Text = text ?? string.Empty, IsSelected = isChecked };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static ComboBox AddAnchoredComboBox(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 16,
+            int dropdownWidth = 20,
+            int dropdownHeight = 6,
+            IEnumerable<object>? items = null,
+            int selectedIndex = -1,
+            bool clampInside = true)
+        {
+            var seed = (items ?? Array.Empty<object>()).ToArray();
+            var ctrl = new ComboBox(width, dropdownWidth, dropdownHeight, seed);
+            host.Controls.Add(ctrl);
+
+            if (selectedIndex >= 0 && selectedIndex < seed.Length)
+                ctrl.SelectedIndex = selectedIndex;
+
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static DrawingArea AddAnchoredDrawingArea(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 20,
+            int height = 6,
+            bool clampInside = true)
+        {
+            var ctrl = new DrawingArea(width, height);
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static Label AddAnchoredLabel(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool clampInside = true)
+        {
+            var ctrl = new Label(text ?? string.Empty);
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static ListBox AddAnchoredListBox(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 20,
+            int height = 7,
+            IEnumerable<string>? items = null,
+            bool clampInside = true)
+        {
+            var ctrl = new ListBox(width, height);
+            if (items != null)
+            {
+                foreach (var it in items)
+                    ctrl.Items.Add(it);
+            }
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static NumberBox AddAnchoredNumberBox(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 8,
+            double value = 0,
+            double min = 0,
+            double max = 100,
+            bool allowDecimal = false,
+            bool showUpDown = true,
+            bool clampInside = true)
+        {
+            var ctrl = new NumberBox(width)
+            {
+                AllowDecimal = allowDecimal,
+                ShowUpDownButtons = showUpDown,
+                NumberMinimum = (long)min,
+                NumberMaximum = (long)max
+            };
+
+            ctrl.Text = allowDecimal ? value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                     : ((long)value).ToString();
+
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static ProgressBar AddAnchoredProgressBar(
+            this ControlsConsole host,
+            int width,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            HorizontalAlignment alignment = HorizontalAlignment.Left,
+            bool clampInside = true,
+            float initialProgress = 0f)
+        {
+            var ctrl = new ProgressBar(width, 1, alignment)
+            {
+                Progress = Math.Clamp(initialProgress, 0f, 1f)
+            };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static RadioButton AddAnchoredRadioButton(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = -1,
+            int height = 1,
+            bool isChecked = false,
+            bool clampInside = true)
+        {
+            var w = width <= 0 ? Math.Max(8, (text?.Length ?? 0) + 4) : width;
+            var ctrl = new RadioButton(w, height) { Text = text ?? string.Empty, IsSelected = isChecked };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static SelectionButton AddAnchoredSelectionButton(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = -1,
+            int height = 1,
+            bool clampInside = true)
+        {
+            var w = width <= 0 ? Math.Max(10, (text?.Length ?? 0) + 2) : width;
+            var ctrl = new SelectionButton(w, height) { Text = text ?? string.Empty };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static TextBox AddAnchoredTextBox(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 16,
+            string? text = null,
+            bool clampInside = true)
+        {
+            var ctrl = new TextBox(width) { Text = text ?? string.Empty };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static ToggleSwitch AddAnchoredToggleSwitch(
+            this ControlsConsole host,
+            string text,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = -1,
+            int height = 1,
+            bool isOn = false,
+            bool clampInside = true)
+        {
+            var w = width <= 0 ? Math.Max(10, (text?.Length ?? 0) + 6) : width;
+            var ctrl = new ToggleSwitch(w, height) { Text = text ?? string.Empty, IsSelected = isOn };
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        // -------- Specialized Controls --------
+
+        public static Panel AddAnchoredPanel(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            int width = 24,
+            int height = 8,
+            bool clampInside = true)
+        {
+            var ctrl = new Panel(width, height);
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static ScrollBar AddAnchoredScrollBar(
+            this ControlsConsole host,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            Orientation orientation = Orientation.Vertical,
+            int length = 8,
+            bool clampInside = true)
+        {
+            var ctrl = new ScrollBar(orientation, length);
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static SurfaceViewer AddAnchoredSurfaceViewer(
+            this ControlsConsole host,
+            int width,
+            int height,
+            ICellSurface? surface,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool clampInside = true)
+        {
+            var ctrl = new SurfaceViewer(width, height, surface);
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static TabControl AddAnchoredTabControl(
+            this ControlsConsole host,
+            IEnumerable<TabItem> tabItems,
+            int width,
+            int height,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool clampInside = true)
+        {
+            var ctrl = new TabControl(tabItems, width, height);
+            host.Controls.Add(ctrl);
+            ctrl.AnchorTo(host, anchor, offset ?? (0, 0), clampInside);
+            return ctrl;
+        }
+
+        public static TabControl AddAnchoredTabControl(
+            this ControlsConsole host,
+            int width,
+            int height,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool clampInside = true,
+            params TabItem[] tabItems)
+        {
+            return host.AddAnchoredTabControl(
+                (IEnumerable<TabItem>)tabItems,
+                width, height, anchor, offset, clampInside);
+        }
+    }
+}
+
+
+// ===== File: ScreenExtensions\CustomScreen.cs =====
+using SadConsole;
+using SadConsole.Components;
+using SadConsole.Input;
+using SadConsole.UI;
+using SadConsole.UI.Controls;
+using SadRogue.Primitives;
+
+namespace OingoBoingoConsole.ScreenExtensions
+{
+    public enum PanelTarget { A, B }
+
+    public readonly struct CustomScreenOptions
+    {
+        public CustomScreenOptions(
+            SplitLayout layout = SplitLayout.Vertical,
+            Color? panelA = null,
+            Color? panelB = null,
+            bool showBorders = false,
+            bool toggleWithF6 = true,
+            (int width, int height)? sizeCells = null)
+        {
+            Layout = layout;
+            PanelAColor = panelA ?? new Color(18, 41, 82);
+            PanelBColor = panelB ?? new Color(82, 18, 18);
+            ShowBorders = showBorders;
+            ToggleWithF6 = toggleWithF6;
+            SizeCells = sizeCells;
+        }
+
+        public SplitLayout Layout { get; }
+        public Color PanelAColor { get; }
+        public Color PanelBColor { get; }
+        public bool ShowBorders { get; }
+        public bool ToggleWithF6 { get; }
+        public (int width, int height)? SizeCells { get; }
+    }
+
+    /// <summary>
+    /// Declarative spec for a single anchored control.
+    /// The Func must create and return the control. We'll add/anchor it for you.
+    /// </summary>
+    public readonly struct AnchoredControlSpec
+    {
+        public AnchoredControlSpec(
+            PanelTarget panel,
+            Func<ControlsConsole, ControlBase> factory,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool clampInside = true,
+            bool keepAnchoredOnResize = true)
+        {
+            Panel = panel;
+            Factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            Anchor = anchor;
+            Offset = offset ?? (0, 0);
+            ClampInside = clampInside;
+            KeepAnchoredOnResize = keepAnchoredOnResize;
+        }
+
+        public PanelTarget Panel { get; }
+        public Func<ControlsConsole, ControlBase> Factory { get; }
+        public Anchor Anchor { get; }
+        public (int x, int y) Offset { get; }
+        public bool ClampInside { get; }
+        public bool KeepAnchoredOnResize { get; }
+    }
+
+    /// <summary>
+    /// High-level screen definition (immutable/struct) that describes colors, split, size,
+    /// and a collection of anchored control specs to instantiate.
+    /// </summary>
+    public readonly struct CustomScreenDefinition
+    {
+        public CustomScreenDefinition(CustomScreenOptions options, IEnumerable<AnchoredControlSpec> controls)
+        {
+            Options = options;
+            Controls = controls?.ToArray() ?? Array.Empty<AnchoredControlSpec>();
+        }
+
+        public CustomScreenOptions Options { get; }
+        public IReadOnlyList<AnchoredControlSpec> Controls { get; }
+    }
+
+    public static class CustomScreenFactory
+    {
+        public static CustomScreen Create(CustomScreenDefinition def) => new CustomScreen(def);
+    }
+
+    /// <summary>
+    /// Runtime screen that builds itself from a <see cref="CustomScreenDefinition"/>.
+    /// Two panels (A,B) with either vertical or horizontal 1:1 split.
+    /// </summary>
+    public sealed class CustomScreen : ScreenObject
+    {
+        private readonly CustomScreenOptions _opts;
+        private readonly IReadOnlyList<AnchoredControlSpec> _specs;
+
+        private readonly ScreenSurface _panelA;
+        private readonly ScreenSurface _panelB;
+
+        private readonly ControlsConsole _uiA;
+        private readonly ControlsConsole _uiB;
+
+        private Rectangle _bounds;
+        private SplitLayout _layout;
+
+        public CustomScreen(CustomScreenDefinition def)
+        {
+            _opts = def.Options;
+            _specs = def.Controls;
+
+            _bounds = new Rectangle(
+                0, 0,
+                _opts.SizeCells?.width ?? GameSettings.GAME_WIDTH,
+                _opts.SizeCells?.height ?? GameSettings.GAME_HEIGHT);
+
+            _layout = _opts.Layout;
+            UseKeyboard = true;
+
+            _panelA = new ScreenSurface(_bounds.Width, _bounds.Height);
+            _panelB = new ScreenSurface(_bounds.Width, _bounds.Height);
+
+            Children.Add(_panelA);
+            Children.Add(_panelB);
+
+            if (_opts.ShowBorders)
+            {
+                SadConsole.UI.Border.CreateForSurface(_panelA, "A");
+                SadConsole.UI.Border.CreateForSurface(_panelB, "B");
+            }
+
+            _uiA = new ControlsConsole(_bounds.Width, _bounds.Height) { Position = (0, 0) };
+            _uiB = new ControlsConsole(_bounds.Width, _bounds.Height) { Position = (0, 0) };
+            MakeTransparent(_uiA);
+            MakeTransparent(_uiB);
+            _panelA.Children.Add(_uiA);
+            _panelB.Children.Add(_uiB);
+
+            // Instantiate controls from the declarative spec
+            BuildControlsFromSpec();
+
+            ApplyLayout();
+
+            if (_opts.ToggleWithF6)
+                SadComponents.Add(new ToggleLayoutKeys(this));
+        }
+
+        private void BuildControlsFromSpec()
+        {
+            foreach (var spec in _specs)
+            {
+                var host = spec.Panel == PanelTarget.A ? _uiA : _uiB;
+                var ctrl = spec.Factory(host);
+                if (ctrl.Parent != host)
+                    host.Controls.Add(ctrl);
+
+                // Anchor using your ControlAnchorExtensions.AnchorTo
+                ctrl.AnchorTo(host, spec.Anchor, spec.Offset, spec.KeepAnchoredOnResize, spec.ClampInside);
+            }
+        }
+
+        private void ApplyLayout()
+        {
+            Rectangle a, b;
+
+            if (_layout == SplitLayout.Vertical)
+            {
+                int leftW = Math.Max(1, _bounds.Width / 2);
+                a = new Rectangle(_bounds.X, _bounds.Y, leftW, _bounds.Height);
+                b = new Rectangle(_bounds.X + leftW, _bounds.Y, _bounds.Width - leftW, _bounds.Height);
+            }
+            else
+            {
+                int topH = Math.Max(1, _bounds.Height / 2);
+                a = new Rectangle(_bounds.X, _bounds.Y, _bounds.Width, topH);
+                b = new Rectangle(_bounds.X, _bounds.Y + topH, _bounds.Width, _bounds.Height - topH);
+            }
+
+            ResizeAndPlace(_panelA, a);
+            ResizeAndPlace(_panelB, b);
+
+            ResizeChildUi(_uiA, a.Size);
+            ResizeChildUi(_uiB, b.Size);
+
+            // Paint backgrounds
+            _panelA.Surface.DefaultForeground = Color.White;
+            _panelA.Surface.DefaultBackground = _opts.PanelAColor;
+            _panelA.Surface.Clear();
+            _panelA.Surface.Print(1, 1, _layout == SplitLayout.Vertical ? "Left panel" : "Top panel");
+
+            _panelB.Surface.DefaultForeground = Color.White;
+            _panelB.Surface.DefaultBackground = _opts.PanelBColor;
+            _panelB.Surface.Clear();
+            _panelB.Surface.Print(1, 1, _layout == SplitLayout.Vertical ? "Right panel" : "Bottom panel");
+        }
+
+        private static void ResizeAndPlace(IScreenSurface surf, in Rectangle rect)
+        {
+            if (rect.Width <= 0 || rect.Height <= 0)
+            {
+                surf.IsVisible = false;
+                return;
+            }
+
+            surf.IsVisible = true;
+            surf.Position = rect.Position;
+
+            var cs = (CellSurface)surf.Surface;
+            if (cs.ViewWidth != rect.Width || cs.ViewHeight != rect.Height ||
+                cs.Width != rect.Width || cs.Height != rect.Height)
+            {
+                cs.Resize(rect.Width, rect.Height, rect.Width, rect.Height, clear: false);
+            }
+        }
+
+        private static void ResizeChildUi(ControlsConsole ui, in Point size)
+        {
+            ui.Position = (0, 0);
+            var cs = (CellSurface)ui.Surface;
+            if (cs.ViewWidth != size.X || cs.ViewHeight != size.Y ||
+                cs.Width != size.X || cs.Height != size.Y)
+            {
+                cs.Resize(size.X, size.Y, size.X, size.Y, clear: false);
+            }
+            MakeTransparent(ui);
+        }
+
+        private static void MakeTransparent(IScreenSurface surf)
+        {
+            surf.Surface.DefaultBackground = new Color(0, 0, 0, 0);
+            surf.Surface.Clear();
+        }
+
+        private sealed class ToggleLayoutKeys : UpdateComponent
+        {
+            private readonly CustomScreen _owner;
+            public ToggleLayoutKeys(CustomScreen owner) => _owner = owner;
+
+            public override void Update(IScreenObject host, TimeSpan delta)
+            {
+                var k = GameHost.Instance.Keyboard;
+                if (k.IsKeyPressed(Keys.F6))
+                {
+                    _owner._layout = _owner._layout == SplitLayout.Vertical
+                        ? SplitLayout.Horizontal
+                        : SplitLayout.Vertical;
+
+                    _owner.ApplyLayout();
+                }
+            }
+        }
+    }
+}
+
+
+// ===== File: ScreenExtensions\CustomScreenBuilder.cs =====
+// File: ScreenExtensions/CustomScreenBuilder.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using SadConsole;
+using SadConsole.UI;
+using SadConsole.UI.Controls;
+using SadRogue.Primitives;
+
+namespace OingoBoingoConsole.ScreenExtensions
+{
+    public sealed class CustomScreenBuilder
+    {
+        private CustomScreenOptions _opts = new();
+        private readonly List<AnchoredControlSpec> _specs = new();
+
+        // ---------- options ----------
+        public CustomScreenBuilder WithLayout(SplitLayout layout)
+        {
+            _opts = new CustomScreenOptions(layout, _opts.PanelAColor, _opts.PanelBColor, _opts.ShowBorders, _opts.ToggleWithF6, _opts.SizeCells);
+            return this;
+        }
+
+        public CustomScreenBuilder WithSize(int width, int height)
+        {
+            _opts = new CustomScreenOptions(_opts.Layout, _opts.PanelAColor, _opts.PanelBColor, _opts.ShowBorders, _opts.ToggleWithF6, (width, height));
+            return this;
+        }
+
+        public CustomScreenBuilder WithPanelColors(Color a, Color b)
+        {
+            _opts = new CustomScreenOptions(_opts.Layout, a, b, _opts.ShowBorders, _opts.ToggleWithF6, _opts.SizeCells);
+            return this;
+        }
+
+        public CustomScreenBuilder WithBorders(bool show = true)
+        {
+            _opts = new CustomScreenOptions(_opts.Layout, _opts.PanelAColor, _opts.PanelBColor, show, _opts.ToggleWithF6, _opts.SizeCells);
+            return this;
+        }
+
+        public CustomScreenBuilder ToggleWithF6(bool on = true)
+        {
+            _opts = new CustomScreenOptions(_opts.Layout, _opts.PanelAColor, _opts.PanelBColor, _opts.ShowBorders, on, _opts.SizeCells);
+            return this;
+        }
+
+        // ---------- generic add ----------
+        public CustomScreenBuilder AddControl(
+            PanelTarget panel,
+            Func<ControlsConsole, ControlBase> factory,
+            Anchor anchor,
+            (int x, int y)? offset = null,
+            bool clampInside = true,
+            bool keepAnchoredOnResize = true)
+        {
+            _specs.Add(new AnchoredControlSpec(panel, factory, anchor, offset, clampInside, keepAnchoredOnResize));
+            return this;
+        }
+
+        // ---------- helpers for built-ins ----------
+        public CustomScreenBuilder AddButton(PanelTarget p, string text, Anchor a, (int x, int y)? off = null, int width = -1, int height = 1)
+            => AddControl(p, host => {
+                var w = width <= 0 ? Math.Max(6, (text?.Length ?? 0) + 2) : width;
+                return new Button(w, height) { Text = text ?? string.Empty };
+            }, a, off);
+
+        public CustomScreenBuilder AddLabel(PanelTarget p, string text, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new Label(text ?? string.Empty), a, off);
+
+        public CustomScreenBuilder AddTextBox(PanelTarget p, int width, string? text, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new TextBox(width) { Text = text ?? string.Empty }, a, off);
+
+        public CustomScreenBuilder AddComboBox(
+            PanelTarget p,
+            int width,
+            int ddWidth,
+            int ddHeight,
+            IEnumerable<object> items,
+            int selectedIndex,
+            Anchor a,
+            (int x, int y)? off = null)
+            => AddControl(p, _ =>
+            {
+                var seed = (items ?? []).ToArray();
+                var c = new ComboBox(width, ddWidth, ddHeight, seed);
+                if (selectedIndex >= 0 && selectedIndex < seed.Length)
+                    c.SelectedIndex = selectedIndex;
+                return c;
+            }, a, off);
+
+
+        public CustomScreenBuilder AddCheckBox(PanelTarget p, string text, bool isChecked, Anchor a, (int x, int y)? off = null, int width = -1)
+            => AddControl(p, _ => {
+                var w = width <= 0 ? Math.Max(8, (text?.Length ?? 0) + 4) : width;
+                return new CheckBox(w, 1) { Text = text ?? string.Empty, IsSelected = isChecked };
+            }, a, off);
+
+        public CustomScreenBuilder AddRadioButton(PanelTarget p, string text, bool isChecked, Anchor a, (int x, int y)? off = null, int width = -1)
+            => AddControl(p, _ => {
+                var w = width <= 0 ? Math.Max(8, (text?.Length ?? 0) + 4) : width;
+                return new RadioButton(w, 1) { Text = text ?? string.Empty, IsSelected = isChecked };
+            }, a, off);
+
+        public CustomScreenBuilder AddToggleSwitch(PanelTarget p, string text, bool isOn, Anchor a, (int x, int y)? off = null, int width = -1)
+            => AddControl(p, _ => {
+                var w = width <= 0 ? Math.Max(10, (text?.Length ?? 0) + 6) : width;
+                return new ToggleSwitch(w, 1) { Text = text ?? string.Empty, IsSelected = isOn };
+            }, a, off);
+
+        public CustomScreenBuilder AddSelectionButton(PanelTarget p, string text, Anchor a, (int x, int y)? off = null, int width = -1)
+            => AddControl(p, _ => {
+                var w = width <= 0 ? Math.Max(10, (text?.Length ?? 0) + 2) : width;
+                return new SelectionButton(w, 1) { Text = text ?? string.Empty };
+            }, a, off);
+
+        public CustomScreenBuilder AddListBox(PanelTarget p, int width, int height, IEnumerable<string> items, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => {
+                var lb = new ListBox(width, height);
+                if (items != null) foreach (var it in items) lb.Items.Add(it);
+                return lb;
+            }, a, off);
+
+        public CustomScreenBuilder AddDrawingArea(PanelTarget p, int width, int height, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new DrawingArea(width, height), a, off);
+
+        public CustomScreenBuilder AddNumberBox(PanelTarget p, int width, double value, double min, double max, bool allowDecimal, bool showUpDown, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => {
+                var nb = new NumberBox(width)
+                {
+                    AllowDecimal = allowDecimal,
+                    ShowUpDownButtons = showUpDown,
+                    NumberMinimum = (long)min,
+                    NumberMaximum = (long)max,
+                };
+                nb.Text = allowDecimal ? value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                       : ((long)value).ToString();
+                return nb;
+            }, a, off);
+
+        public CustomScreenBuilder AddProgressBar(PanelTarget p, int width, float progress, HorizontalAlignment align, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new ProgressBar(width, 1, align) { Progress = Math.Clamp(progress, 0f, 1f) }, a, off);
+
+        public CustomScreenBuilder AddButton3d(PanelTarget p, string text, int width, int height, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new Button3d(width, height) { Text = text ?? string.Empty }, a, off);
+
+        public CustomScreenBuilder AddButtonBox(PanelTarget p, string text, int width, int height, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new ButtonBox(width, height) { Text = text ?? string.Empty }, a, off);
+
+        public CustomScreenBuilder AddPanel(PanelTarget p, int width, int height, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new Panel(width, height), a, off);
+
+        public CustomScreenBuilder AddScrollBar(PanelTarget p, Orientation orientation, int length, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new ScrollBar(orientation, length), a, off);
+
+        public CustomScreenBuilder AddSurfaceViewer(PanelTarget p, int width, int height, ICellSurface? surface, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new SurfaceViewer(width, height, surface), a, off);
+
+        public CustomScreenBuilder AddTabControl(PanelTarget p, int width, int height, IEnumerable<TabItem> tabs, Anchor a, (int x, int y)? off = null)
+            => AddControl(p, _ => new TabControl(tabs ?? Enumerable.Empty<TabItem>(), width, height), a, off);
+
+        // ---------- build ----------
+        public CustomScreen Build()
+            => CustomScreenFactory.Create(new CustomScreenDefinition(_opts, _specs));
+    }
+}
+
+
+// ===== File: ScreenExtensions\TestScreen.cs =====
+// File: ScreenExtensions/TestScreen.cs
+using SadConsole;
+using SadConsole.Components;
+using SadConsole.Input;
+using SadConsole.UI;              // Border
+using SadRogue.Primitives;
+using SadConsole.UI.Controls;
+using Console = SadConsole.Console;
+
+namespace OingoBoingoConsole.ScreenExtensions
+{
+    public enum SplitLayout
+    {
+        Vertical,
+        Horizontal
+    }
+
+    public readonly struct TestScreenOptions
+    {
+        public TestScreenOptions(
+            SplitLayout layout = SplitLayout.Vertical,
+            Color? panelA = null,
+            Color? panelB = null,
+            bool showBorders = false,
+            bool toggleWithF6 = true,
+            (int width, int height)? sizeCells = null)
+        {
+            Layout = layout;
+            PanelAColor = panelA ?? new Color(18, 41, 82);
+            PanelBColor = panelB ?? new Color(82, 18, 18);
+            ShowBorders = showBorders;
+            ToggleWithF6 = toggleWithF6;
+            SizeCells = sizeCells;
+        }
+
+        public SplitLayout Layout { get; }
+        public Color PanelAColor { get; }
+        public Color PanelBColor { get; }
+        public bool ShowBorders { get; }
+        public bool ToggleWithF6 { get; }
+        public (int width, int height)? SizeCells { get; }
+    }
+
+    public static class TestScreenFactory
+    {
+        public static TestScreen Create(TestScreenOptions options) => new TestScreen(options);
+
+        public static TestScreen Create(Action<TestScreenOptions>? configure = null)
+        {
+            var opts = new TestScreenOptions();
+            configure?.Invoke(opts);
+            return new TestScreen(opts);
+        }
+    }
+
+    /// <summary>
+    /// Minimal starting screen with two ScreenSurfaces laid out 1:1,
+    /// a transparent UI layer per panel, anchor demo tags, and samples
+    /// of every built-in control placed via the Anchor helpers.
+    /// </summary>
+    public sealed class TestScreen : ScreenObject
+    {
+        private readonly ScreenSurface _panelA;
+        private readonly ScreenSurface _panelB;
+
+        private Rectangle _bounds;
+        private SplitLayout _layout;
+        private readonly Color _colorA;
+        private readonly Color _colorB;
+        private readonly bool _showBorders;
+
+        // UI layers (controls) for each panel
+        private readonly ControlsConsole _uiA;
+        private readonly ControlsConsole _uiB;
+
+        // Separate "tag" layers so we can rebuild anchor samples without nuking UI
+        private readonly ScreenObject _tagsA;
+        private readonly ScreenObject _tagsB;
+
+        // --- Panel A controls (common controls) ---
+        private readonly Button _btnOkA;
+        private readonly Button _btnCancelA;
+        private readonly CheckBox _chkA;
+        private readonly ComboBox _cmbA;
+        private readonly DrawingArea _drawA;
+        private readonly Label _lblA;
+        private readonly ListBox _listA;
+        private readonly NumberBox _numA;
+        private readonly ProgressBar _progA;
+        private readonly RadioButton _radA;
+        private readonly SelectionButton _selA;
+        private readonly TextBox _txtA;
+        private readonly ToggleSwitch _tgsA;
+
+        // --- Panel B controls (specialized + remaining buttons) ---
+        private readonly Button3d _btn3dB;
+        private readonly ButtonBox _btnBoxB;
+        private readonly Panel _panelCtlB;
+        private readonly ScrollBar _scrollB;
+        private readonly SurfaceViewer _viewerB;
+        private readonly TabControl _tabsB;
+
+        public TestScreen(TestScreenOptions options)
+            : this(
+                new Rectangle(
+                    0, 0,
+                    options.SizeCells?.width ?? GameSettings.GAME_WIDTH,
+                    options.SizeCells?.height ?? GameSettings.GAME_HEIGHT),
+                options)
+        { }
+
+        public TestScreen()
+            : this(
+                new Rectangle(0, 0, GameSettings.GAME_WIDTH, GameSettings.GAME_HEIGHT),
+                new TestScreenOptions())
+        { }
+
+        public TestScreen(Rectangle bounds, TestScreenOptions options)
+        {
+            _bounds = bounds;
+            _layout = options.Layout;
+            _colorA = options.PanelAColor;
+            _colorB = options.PanelBColor;
+            _showBorders = options.ShowBorders;
+            UseKeyboard = true;
+
+            _panelA = new ScreenSurface(_bounds.Width, _bounds.Height);
+            _panelB = new ScreenSurface(_bounds.Width, _bounds.Height);
+
+            Children.Add(_panelA);
+            Children.Add(_panelB);
+
+            if (_showBorders)
+            {
+                Border.CreateForSurface(_panelA, "A");
+                Border.CreateForSurface(_panelB, "B");
+            }
+
+            // --- Tag layers (for anchor demo labels) ---
+            _tagsA = new ScreenObject();
+            _tagsB = new ScreenObject();
+            _panelA.Children.Add(_tagsA);
+            _panelB.Children.Add(_tagsB);
+
+            // --- UI layers (ControlsConsole) ---
+            _uiA = new ControlsConsole(_bounds.Width, _bounds.Height) { Position = (0, 0) };
+            _uiB = new ControlsConsole(_bounds.Width, _bounds.Height) { Position = (0, 0) };
+            MakeTransparent(_uiA);
+            MakeTransparent(_uiB);
+            _panelA.Children.Add(_uiA);   // UI draws on top of tags
+            _panelB.Children.Add(_uiB);
+
+            // ===== Instantiate ALL controls we’ll demo =====
+
+            // Panel A - "common controls"
+            _btnOkA = new Button(10, 1) { Text = "OK" };
+            _btnCancelA = new Button(10, 1) { Text = "Cancel" };
+            _chkA = new CheckBox(Math.Max(10, "Check me".Length + 4), 1) { Text = "Check me", IsSelected = true };
+            _cmbA = new ComboBox(16, 20, 6, new object[] { "Alpha", "Beta", "Gamma" }) { SelectedIndex = 0 };
+            _drawA = new DrawingArea(20, 6);
+            _lblA = new Label("Common Controls");
+            _listA = new ListBox(20, 7);
+            _listA.Items.Add("One"); _listA.Items.Add("Two"); _listA.Items.Add("Three");
+            _numA = new NumberBox(8) { AllowDecimal = false, ShowUpDownButtons = true, NumberMinimum = 0, NumberMaximum = 100, Text = "42" };
+            _progA = new ProgressBar(24, 1, HorizontalAlignment.Left) { Progress = 0.35f };
+            _radA = new RadioButton(Math.Max(10, "Pick me".Length + 4), 1) { Text = "Pick me", IsSelected = true };
+            _selA = new SelectionButton(14, 1) { Text = "Select…" };
+            _txtA = new TextBox(18) { Text = "Edit me" };
+            _tgsA = new ToggleSwitch(12, 1) { Text = "Toggle", IsSelected = false };
+
+            _uiA.Controls.Add(_btnOkA);
+            _uiA.Controls.Add(_btnCancelA);
+            _uiA.Controls.Add(_chkA);
+            _uiA.Controls.Add(_cmbA);
+            _uiA.Controls.Add(_drawA);
+            _uiA.Controls.Add(_lblA);
+            _uiA.Controls.Add(_listA);
+            _uiA.Controls.Add(_numA);
+            _uiA.Controls.Add(_progA);
+            _uiA.Controls.Add(_radA);
+            _uiA.Controls.Add(_selA);
+            _uiA.Controls.Add(_txtA);
+            _uiA.Controls.Add(_tgsA);
+
+            // Panel B - "specialized + remaining buttons"
+            _btn3dB = new Button3d(12, 3) { Text = "3D Btn" };
+            _btnBoxB = new ButtonBox(12, 3) { Text = "Box Btn" };
+            _panelCtlB = new Panel(26, 8); // (no Title property)
+            _scrollB = new ScrollBar(Orientation.Vertical, 8);
+
+            // SurfaceViewer needs a surface to display; make a small sample
+            var svSurface = new CellSurface(24, 6);
+            svSurface.Fill(Color.White, new Color(25, 25, 25), 0, 0);
+            svSurface.Print(2, 2, "SurfaceViewer");
+            _viewerB = new SurfaceViewer(24, 6, svSurface);
+
+            // TabControl requires TabItem(string header, Panel content)
+            // We’ll keep the panels empty (no child adds) to avoid protected Controls access.
+            var tabP1 = new Panel(18, 5);
+            var tabP2 = new Panel(18, 5);
+            var tabs = new[]
+            {
+                new TabItem("One", tabP1),
+                new TabItem("Two", tabP2)
+            };
+            _tabsB = new TabControl(tabs, 20, 6);
+
+            _uiB.Controls.Add(_btn3dB);
+            _uiB.Controls.Add(_btnBoxB);
+            _uiB.Controls.Add(_panelCtlB);
+            _uiB.Controls.Add(_scrollB);
+            _uiB.Controls.Add(_viewerB);
+            _uiB.Controls.Add(_tabsB);
+
+            ApplyLayout();
+
+            if (options.ToggleWithF6)
+                SadComponents.Add(new ToggleLayoutKeys(this));
+        }
+
+        private void ApplyLayout()
+        {
+            Rectangle a, b;
+
+            if (_layout == SplitLayout.Vertical)
+            {
+                int leftW = Math.Max(1, _bounds.Width / 2);
+                a = new Rectangle(_bounds.X, _bounds.Y, leftW, _bounds.Height);
+                b = new Rectangle(_bounds.X + leftW, _bounds.Y, _bounds.Width - leftW, _bounds.Height);
+            }
+            else
+            {
+                int topH = Math.Max(1, _bounds.Height / 2);
+                a = new Rectangle(_bounds.X, _bounds.Y, _bounds.Width, topH);
+                b = new Rectangle(_bounds.X, _bounds.Y + topH, _bounds.Width, _bounds.Height - topH);
+            }
+
+            ResizeAndPlace(_panelA, a);
+            ResizeAndPlace(_panelB, b);
+
+            ResizeChildUi(_uiA, a.Size);
+            ResizeChildUi(_uiB, b.Size);
+
+            // --- Re-anchor all controls each pass so they stay glued ---
+
+            // A: bottom corners buttons
+            _btnOkA.AnchorTo(_uiA, Anchor.BottomLeft, (-1, -1));
+            _btnCancelA.AnchorTo(_uiA, Anchor.BottomRight, (-1, -1));
+
+            // A: top row
+            _lblA.AnchorTo(_uiA, Anchor.TopLeft, (1, 1));
+            _txtA.AnchorTo(_uiA, Anchor.TopMiddle, (0, 1));
+            _cmbA.AnchorTo(_uiA, Anchor.TopRight, (-1, 1));
+
+            // A: middle row (left/right)
+            _listA.AnchorTo(_uiA, Anchor.MiddleLeft, (1, 0));
+            _drawA.AnchorTo(_uiA, Anchor.MiddleRight, (-21, -3)); // center the 20x6 box roughly
+
+            // A: lower row
+            _chkA.AnchorTo(_uiA, Anchor.BottomLeft, (1 + _btnOkA.Width + 2, -1));  // next to OK
+            _radA.AnchorTo(_uiA, Anchor.BottomLeft, (1 + _btnOkA.Width + _chkA.Width + 4, -1));
+            _tgsA.AnchorTo(_uiA, Anchor.BottomLeft, (1 + _btnOkA.Width + _chkA.Width + _radA.Width + 6, -1));
+            _numA.AnchorTo(_uiA, Anchor.BottomMiddle, (-20, -1));
+            _progA.AnchorTo(_uiA, Anchor.BottomMiddle, (6, -1));
+            _selA.AnchorTo(_uiA, Anchor.BottomMiddle, (-_selA.Width / 2, -3));
+
+            // B: top & middle
+            _btn3dB.AnchorTo(_uiB, Anchor.TopLeft, (1, 1));
+            _btnBoxB.AnchorTo(_uiB, Anchor.TopRight, (-13, 1));
+            _panelCtlB.AnchorTo(_uiB, Anchor.MiddleLeft, (1, -4));
+            _viewerB.AnchorTo(_uiB, Anchor.MiddleRight, (-26, -3));
+
+            // B: right edge scroll bar (use Height instead of non-existent Length)
+            _scrollB.AnchorTo(_uiB, Anchor.MiddleRight, (-1, -_scrollB.Height / 2));
+
+            // B: bottom tabs
+            _tabsB.AnchorTo(_uiB, Anchor.BottomMiddle, (-_tabsB.Width / 2, -_tabsB.Height));
+
+            // --- Paint backgrounds and headings ---
+            _panelA.Surface.DefaultForeground = Color.White;
+            _panelA.Surface.DefaultBackground = _colorA;
+            _panelA.Surface.Clear();
+            _panelA.Surface.Print(1, 1, _layout == SplitLayout.Vertical ? "Left panel" : "Top panel");
+
+            _panelB.Surface.DefaultForeground = Color.White;
+            _panelB.Surface.DefaultBackground = _colorB;
+            _panelB.Surface.Clear();
+            _panelB.Surface.Print(1, 1, _layout == SplitLayout.Vertical ? "Right panel" : "Bottom panel");
+
+            PlaceAnchoredSamples();   // anchor labels (on separate tag layers)
+        }
+
+        private void PlaceAnchoredSamples()
+        {
+            _tagsA.Children.Clear();
+            _tagsB.Children.Clear();
+
+            void TagA(string text, Anchor anchor, Color bg, Color? fg = null, Point? offset = null)
+            {
+                var label = new Console(text.Length + 2, 1);
+                label.Surface.DefaultBackground = bg;
+                label.Surface.DefaultForeground = fg ?? Color.White;
+                label.Surface.Clear();
+                label.Print(1, 0, text);
+
+                var area = new Rectangle(0, 0, _panelA.Surface.ViewWidth, _panelA.Surface.ViewHeight);
+                label.AttachToAnchor(area, anchor, offset);
+
+                _tagsA.Children.Add(label);
+            }
+
+            void TagB(string text, Anchor anchor, Color bg, Color? fg = null, Point? offset = null)
+            {
+                var label = new Console(text.Length + 2, 1);
+                label.Surface.DefaultBackground = bg;
+                label.Surface.DefaultForeground = fg ?? Color.White;
+                label.Surface.Clear();
+                label.Print(1, 0, text);
+
+                var area = new Rectangle(0, 0, _panelB.Surface.ViewWidth, _panelB.Surface.ViewHeight);
+                label.AttachToAnchor(area, anchor, offset);
+
+                _tagsB.Children.Add(label);
+            }
+
+            // Panel A (blue)
+            TagA("A:TopLeft", Anchor.TopLeft, _colorA.GetBrightest());
+            TagA("A:TopRight", Anchor.TopRight, _colorA.GetBrightest());
+            TagA("A:MiddleLeft", Anchor.MiddleLeft, _colorA.GetDarker());
+            TagA("A:MiddleRight", Anchor.MiddleRight, _colorA.GetDarker());
+            TagA("A:TopMiddle", Anchor.TopMiddle, _colorA.GetDarker());
+            TagA("A:BottomMiddle", Anchor.BottomMiddle, _colorA.GetDarkest());
+            TagA("A:BottomLeft", Anchor.BottomLeft, _colorA.GetDarkest());
+            TagA("A:BottomRight", Anchor.BottomRight, _colorA.GetDarkest());
+            TagA("A:Middle", Anchor.Middle, _colorA.GetDarkest());
+
+            // Panel B (red-ish)
+            TagB("B:TopLeft", Anchor.TopLeft, _colorB.GetBrightest());
+            TagB("B:TopRight", Anchor.TopRight, _colorB.GetBrightest());
+            TagB("B:MiddleLeft", Anchor.MiddleLeft, _colorB.GetDarker());
+            TagB("B:MiddleRight", Anchor.MiddleRight, _colorB.GetDarker());
+            TagB("B:TopMiddle", Anchor.TopMiddle, _colorB.GetDarker());
+            TagB("B:BottomMiddle", Anchor.BottomMiddle, _colorB.GetDarkest());
+            TagB("B:BottomLeft", Anchor.BottomLeft, _colorB.GetDarkest());
+            TagB("B:BottomRight", Anchor.BottomRight, _colorB.GetDarkest());
+            TagB("B:Middle", Anchor.Middle, _colorB.GetDarkest());
+        }
+
+        private static void ResizeAndPlace(IScreenSurface surf, in Rectangle rect)
+        {
+            if (rect.Width <= 0 || rect.Height <= 0)
+            {
+                surf.IsVisible = false;
+                return;
+            }
+
+            surf.IsVisible = true;
+            surf.Position = rect.Position;
+
+            var cs = (CellSurface)surf.Surface;
+            if (cs.ViewWidth != rect.Width || cs.ViewHeight != rect.Height ||
+                cs.Width != rect.Width || cs.Height != rect.Height)
+            {
+                cs.Resize(rect.Width, rect.Height, rect.Width, rect.Height, clear: false);
+            }
+        }
+
+        private static void ResizeChildUi(ControlsConsole ui, in Point size)
+        {
+            ui.Position = (0, 0); // relative to its parent panel
+            var cs = (CellSurface)ui.Surface;
+            if (cs.ViewWidth != size.X || cs.ViewHeight != size.Y ||
+                cs.Width != size.X || cs.Height != size.Y)
+            {
+                cs.Resize(size.X, size.Y, size.X, size.Y, clear: false);
+            }
+
+            // keep UI surface transparent after any resize
+            MakeTransparent(ui);
+        }
+
+        private static void MakeTransparent(IScreenSurface surf)
+        {
+            surf.Surface.DefaultBackground = new Color(0, 0, 0, 0); // fully transparent
+            surf.Surface.Clear();
+        }
+
+        private sealed class ToggleLayoutKeys : UpdateComponent
+        {
+            private readonly TestScreen _owner;
+            public ToggleLayoutKeys(TestScreen owner) => _owner = owner;
+
+            public override void Update(IScreenObject host, TimeSpan delta)
+            {
+                var k = GameHost.Instance.Keyboard;
+                if (k.IsKeyPressed(Keys.F6))
+                {
+                    _owner._layout = _owner._layout == SplitLayout.Vertical
+                        ? SplitLayout.Horizontal
+                        : SplitLayout.Vertical;
+
+                    _owner.ApplyLayout();
+                }
+            }
+        }
+    }
+}
+
+
